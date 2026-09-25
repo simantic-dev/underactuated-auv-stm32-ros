@@ -1,0 +1,11 @@
+<launch>
+    <node name="data_convert_node" pkg="serial_node" type="convert_program" output="screen" >
+	</node>
+	<node name="gps_path_node" pkg="serial_node" type="test_node" output="screen" >
+	</node>
+    <node name="data_get_node" pkg="serial_node" type="w_e_convert" >
+	</node>
+	<!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find wheeltec_gps_driver)/rviz/gps_path.rviz"/>-->
+
+
+</launch>

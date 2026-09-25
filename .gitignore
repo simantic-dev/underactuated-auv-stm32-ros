@@ -1,0 +1,39 @@
+# ROS/catkin generated directories
+ros1_ws/build/
+ros1_ws/devel/
+ros1_ws/install/
+ros1_ws/log/
+ros1_ws/.catkin_tools/
+
+# ROS runtime data
+*.bag
+*.bag.active
+*.csv
+*.log
+gps_data.txt
+los_data.csv
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Editors and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Third-party reference documents kept locally but not redistributed
+docs/_local_reference/
+
+# Keil/STM32 generated output
+MDK-ARM/IMUDMA/
+MDK-ARM/*.uvguix.*
+*.axf
+*.hex
+*.bin
+*.map
+*.lst
+*.o
+*.d
+*.dep

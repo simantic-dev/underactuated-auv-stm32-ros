@@ -1,0 +1,12 @@
+float32 rec_latitude_deg
+float32 rec_latitude_min
+float32 rec_longitude_deg
+float32 rec_longitude_min
+float32 rec_heading_angle
+float32 rec_gps_state_bit
+float32 rec_RTK_bit
+float32 rec_latitude_bit
+float32 rec_longitude_bit
+float32 latitude
+float32 longitude
+float32 speed

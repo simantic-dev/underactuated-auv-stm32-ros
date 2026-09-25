@@ -1,0 +1,13 @@
+<launch>
+    <node name="data_get_node" pkg="serial_node" type="gps_data_receiver" >
+	</node>
+	<node name="gps_path_node" pkg="serial_node" type="test_node" output="screen" >
+	</node>
+    <node name="los_node" pkg="serial_send_gps" type="los_s_result" output="screen" >
+	</node>
+	<node name="data_send_node" pkg="serial_send_gps" type="serial_send_gpsdata" output="screen" >
+	</node>
+	<!-- <node name="rviz" pkg="rviz" type="rviz" /> -->
+
+
+</launch>

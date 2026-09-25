@@ -1,0 +1,8 @@
+<launch>
+    <!-- 加载地图 -->
+    <node pkg="map_server" type="map_server" name="map_server" args="$(find serial_node)/map/hyrj_map.yaml" />
+  
+    <!-- 发布UTM到map的静态TF -->
+    <node pkg="tf" type="static_transform_publisher" name="utm_to_map"
+          args="211912.1325 3968128.5482 0 0 0 0 utm map 100" />
+  </launch>
