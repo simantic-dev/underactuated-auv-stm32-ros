@@ -1,0 +1,15 @@
+ATKP frames decoded from USB CDC: 4020 good, 0 bad checksum
+  0x01 acc/gyro: 3576 frames, first at 4.202 s, last at 39.998 s
+  0x08 position: 267 frames, first at 4.242 s, last at 39.908 s
+  0xF2 DVL velocity: 88 frames, first at 4.702 s, last at 39.608 s
+  0x20 PWM: 89 frames, first at 4.552 s, last at 39.808 s
+Jetson commands sent on USART2: 6: 12.0s 0x51; 20.0s 0x51; 22.0s 0x51; 30.0s 0x51; 33.0s 0x51; 36.0s 0x02
+TIM8 CCR3 (thruster) writes: 17926; first write after boot 1500 us at 5.173 s; first non-neutral value 1688 us at 12.002 s; after the 12 s command: 1688 us; after the 33 s command: 1562; after stop (36 s): 1500
+TIM8 CCR3 stabilizer loop catch-up: 1573 writes between 7.1 and 7.3 s (loop period is 2 ms: nominal 100); median gap 33 us
+TIM8 CCR3 steady period 8..35 s: median 2.000 ms (13500 writes)
+USART3 servo lines: 5553; at 10 s 1498,1502,1498,1502 us (PWM1..4); at 14 s 1498,1552 (rudder, elevator); at 24 s 1647,1498; at 31 s 1498,1435; at 37 s 1498,1498
+Depth variable: 359 writes, 358 plausible; max 1.500 m at 20.0 s; at 20 s 1.481 m (profile 1.500), at 36 s 0.025 m
+Depth variable implausible values: 3.8740886706195135e-34 at 4.201 s
+DVL vx at 18 s 0.600 m/s (profile 0.600); vz at 16 s 0.188 m/s (profile 0.1875)
+DVL dead-reckoning at 36 s: x 8.15 m, y 5.75 m, z 0.05 m
+IMU gyro z reported at 26 s: 0.19 rad/s (profile 0.196, the firmware truncates to 0.01 rad/s)

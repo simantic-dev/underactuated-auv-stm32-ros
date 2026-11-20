@@ -1,3 +1,64 @@
+<!-- simantic-banner -->
+> **Run this firmware with no hardware.** [Simantic](https://simantic.com) simulates the whole board, peripherals, sensors and buses included. Try it free at **[simantic.com](https://simantic.com)**, or run it locally: `curl -fsSL https://simantic.com/install | sh`
+
+## This fork: the AUV firmware on a simulated STM32H7, with a scripted dive
+
+Unofficial demo fork of [ros2xiaobai/underactuated-auv-stm32-ros](https://github.com/ros2xiaobai/underactuated-auv-stm32-ros); all credit for the firmware goes to its author. The upstream repository has no license file, so nothing here is a grant of rights: this fork only adds a `sim/` folder, this README section and one `.gitignore` line, and no upstream source file is changed. Not affiliated with the author.
+
+The unmodified STM32H750 firmware (FreeRTOS, MTi IMU, DVL, serial depth sensor, thruster PWM, Jetson link) is built with
+arm-none-eabi-gcc and runs in the Simantic simulator, wired to five Python peers. Everything is in [`sim/`](sim/).
+
+```
+cd sim && make && ./run.sh     # needs sim on PATH, arm-none-eabi-gcc; the plot needs python3 + matplotlib (PYTHON=... ./run.sh)
+```
+
+![scripted dive](sim/dive.png)
+
+**What is attached** (`sim/scenario.yaml`): MTi-630 IMU on UART4 (100 Hz, big-endian XDI records), serial depth sensor on UART8
+(`T=..D=..`, 10 Hz), DVL on USART1 (`wrz`/`wrp` lines with CRC-8, 5 Hz), the Jetson on USART2 (ATKP frames, 57600; the peer sends the
+dive commands), and the rudder/elevator sub-controller on USART3 (the firmware prints its servo commands there as text).
+The thruster output is read from the TIM8 CCR3 register. The firmware's USB CDC telemetry (what the Jetson would read) is decoded from the simulator console.
+The dive profile (`sim/auvprofile.py`) is a **scripted trajectory, not a vehicle model**: the firmware is open loop, so nothing is fed back.
+
+**Measured, from a real run** (`sim` 0.10.5, [`sim/run.log`](sim/run.log), 40 s of virtual time, about 50 s of wall clock with memory tracing; [`sim/measured.txt`](sim/measured.txt)):
+
+    ATKP frames decoded from USB CDC: 4020 good, 0 bad checksum
+      0x01 acc/gyro: 3576 frames, first at 4.202 s, last at 39.998 s
+      0x08 position: 267 frames, first at 4.242 s, last at 39.908 s
+      0xF2 DVL velocity: 88 frames, first at 4.702 s, last at 39.608 s
+      0x20 PWM: 89 frames, first at 4.552 s, last at 39.808 s
+    Jetson commands sent on USART2: 6: 12.0s 0x51; 20.0s 0x51; 22.0s 0x51; 30.0s 0x51; 33.0s 0x51; 36.0s 0x02
+    TIM8 CCR3 (thruster) writes: 17926; first write after boot 1500 us at 5.173 s; first non-neutral value 1688 us at 12.002 s; after the 12 s command: 1688 us; after the 33 s command: 1562; after stop (36 s): 1500
+    TIM8 CCR3 stabilizer loop catch-up: 1573 writes between 7.1 and 7.3 s (loop period is 2 ms: nominal 100); median gap 33 us
+    TIM8 CCR3 steady period 8..35 s: median 2.000 ms (13500 writes)
+    USART3 servo lines: 5553; at 10 s 1498,1502,1498,1502 us (PWM1..4); at 14 s 1498,1552 (rudder, elevator); at 24 s 1647,1498; at 31 s 1498,1435; at 37 s 1498,1498
+    Depth variable: 359 writes, 358 plausible; max 1.500 m at 20.0 s; at 20 s 1.481 m (profile 1.500), at 36 s 0.025 m
+    Depth variable implausible values: 3.8740886706195135e-34 at 4.201 s
+    DVL vx at 18 s 0.600 m/s (profile 0.600); vz at 16 s 0.188 m/s (profile 0.1875)
+    DVL dead-reckoning at 36 s: x 8.15 m, y 5.75 m, z 0.05 m
+    IMU gyro z reported at 26 s: 0.19 rad/s (profile 0.196, the firmware truncates to 0.01 rad/s)
+
+What this shows: the whole chain works as written. The IMU, depth and DVL streams are parsed (depth reaches 1.5 m, DVL vx 0.600 m/s), the Jetson commands arrive and
+set the thruster to 1688 us (command 120) and the rudder/elevator servo values (PWM = 1200 + 600 x value/255), and the telemetry frames all pass the ATKP checksums.
+The sensor values come from the scripted profile, so agreement with the profile shows the parsers and links work, not that the vehicle would dive.
+
+**What had to be added to build it** (all under `sim/`, none changes upstream source): the upstream project is Keil MDK-ARM only, so there is a
+`Makefile`, a CubeMX-style linker script for the STM32H750VB (128 KB flash; the image is 101 KB of flash), the GCC startup file from ST's CMSIS templates,
+the FreeRTOS V10.3.1 GCC ARM_CM4F port (upstream ships only the Keil/RVDS port), and `syscalls.c`, which maps newlib's `_write` to the firmware's own `fputc` (console on LPUART1). Warnings are silenced with `-w`.
+
+**Chip used:** the released simulator has no STM32H750 part, so the run uses **STM32H743VI** (same die family: the H750 is the 128 KB flash part, without the crypto block). Nothing here depends on the difference, but it is not a claim about H750 silicon. No hardware comparison has been done.
+
+**Findings** (firmware behaviour, observed in the sim; not reported upstream):
+- `stabilizerTask` takes `lastWakeTime` before its roughly 3 s start-up sequence, so `vTaskDelayUntil` runs about 1500 loop iterations back to back after it: 1573 TIM8 CCR3 writes about 33 us apart at 7.17 s, then 2.000 ms steady.
+- No control loop runs: `state1Control` is never called, `Mode` and the 0x41 yaw/speed setpoint are stored and never used, and `Heading_control`/`Depth_control` are commented out. Only the thruster reaches a timer (TIM8 CCR3); rudder and elevator values go out as text on USART3.
+- The depth callback ignores the result of `sscanf`. A partial first line left `depth` uninitialised, and the value 3.9e-34 (the bits of a flash address) was queued as a depth sample at 4.201 s.
+- `CDC_Transmit_FS` returns `USBD_BUSY` and the caller ignores it, dropping the whole packed buffer. Over 36 s only 267 position frames (nominal 10 Hz, about 360) and 88 DVL velocity frames (nominal 5 Hz, about 180) arrived. How much of this is real USB timing is unverified: no silicon run.
+- Telemetry goes to USB only (`Uart2linkSendPacket` is commented out), so USART2 is receive-only in this tree. Euler angles and depth are never sent to the Jetson.
+
+---
+
+Everything below is the upstream README.
+
 # Torpedo-Shaped Underactuated AUV
 
 基于 STM32H750 与 Jetson Nano 的鱼雷型欠驱动自主水下航行器项目。STM32 端运行 FreeRTOS，负责多传感器采集、组合导航、实时控制和执行机构输出；Jetson 端运行 ROS 1，负责串口数据接入、航点管理、期望航向计算、控制帧下发以及航迹可视化。

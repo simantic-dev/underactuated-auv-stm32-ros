@@ -1,0 +1,19 @@
+# Underactuated AUV firmware (STM32H750VB, built from upstream with sim/Makefile) on a simulated STM32H743VI
+# (the released sim has no H750 part; same die family, the H750 has 128 KB flash and no crypto). Run: ./run.sh
+machines:
+  auv:
+    mcu: STM32H743VI
+    elf: auv.elf
+    parts:
+      - { name: imu,    type: uart-device, script: imu_peer.py }      # UART4   MTi-630, 2 Mbaud
+      - { name: depth,  type: uart-device, script: depth_peer.py }    # UART8   serial depth sensor
+      - { name: dvl,    type: uart-device, script: dvl_peer.py }      # USART1  DVL wrz/wrp
+      - { name: jetson, type: uart-device, script: jetson_peer.py }   # USART2  ATKP link, 57600
+      - { name: servo,  type: uart-device, script: servo_peer.py }    # USART3  rudder/elevator commands as text
+media:
+  - { type: uart, connect: [auv.uart4,  auv.imu] }
+  - { type: uart, connect: [auv.uart8,  auv.depth] }
+  - { type: uart, connect: [auv.usart1, auv.dvl] }
+  - { type: uart, connect: [auv.usart2, auv.jetson] }
+  - { type: uart, connect: [auv.usart3, auv.servo] }
+timeout: 40

@@ -37,3 +37,5 @@ MDK-ARM/*.uvguix.*
 *.o
 *.d
 *.dep
+sim/build/
+sim/auv.map
