@@ -16,7 +16,7 @@ cd sim && make && ./run.sh     # needs sim on PATH, arm-none-eabi-gcc; the plot 
 
 ![scripted dive, animated](sim/dive.gif)
 
-*Re-run on `sim` 0.10.8 (build 64f89c38), 2026-11-25: 40 s of virtual time with memory tracing, 4020 ATKP frames and 0 bad checksums, `sim/measured.txt` unchanged from the 0.10.5 run. Animation from `sim/run.log` (the firmware's Depth variable and TIM8 CCR3 writes, with the Jetson peer's commands marked), drawn by `sim/make_gif.py sim/run.log sim/dive.gif "sim 0.10.8"`. The depth profile is the scripted stimulus, not a vehicle model.*
+*Re-run on `sim` 0.10.8 (build 64f89c38), 2026-11-25: 40 s of virtual time with memory tracing, 4020 ATKP frames and 0 bad checksums, `sim/measured.txt` unchanged from the 0.10.5 run. Animation from `sim/run.log` (the firmware's Depth variable and TIM8 CCR3 writes, with the Jetson peer's commands marked), drawn by `python3 sim/make_gif.py sim/run.log sim/dive.gif 0.10.8` (1280x720, 12 fps, playback 2.67x, Pillow + ffmpeg; `sim/gifkit.py`). The Jetson commands (DIVE, LEVEL, TURN, ASCEND, THRUST DOWN, STOP) are the Jetson peer's own script. The depth profile is the scripted stimulus, not a vehicle model.*
 
 **What is attached** (`sim/scenario.yaml`): MTi-630 IMU on UART4 (100 Hz, big-endian XDI records), serial depth sensor on UART8
 (`T=..D=..`, 10 Hz), DVL on USART1 (`wrz`/`wrp` lines with CRC-8, 5 Hz), the Jetson on USART2 (ATKP frames, 57600; the peer sends the
